@@ -1,0 +1,189 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<!-- JQuery -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+		<style>
+			.hidden {
+				display: none;
+			}
+
+			p {
+				font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   				font-weight: 300;
+			}
+
+			body {
+				background-color: #F0F6F0;
+				color: #555555; /* apple grey */
+			}
+
+			#container {
+				width: 600px;
+				background-color: white;
+				margin-left:280px; 
+				border: 1px solid #555555; 
+				border-radius: 10px;
+				padding-left: 50px;
+				padding-right: 50px;
+				padding-top: 10px;
+				padding-bottom: 10px;
+			}
+
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<h1 style="margin-left: 18%">Modular Times Table</h1>
+			<canvas id="myCanvas" width="600" height="500"></canvas>
+		    <p id="text">Factor: </p>
+		    <button onclick="change_points();">Points Change</button>
+		    <button onclick="change_factor(1, 2, 500);">Factor Change</button>
+		    <button  onclick="change_factor(.1, 1, 200);">Factor Change Continuous</button>
+		    <button onclick="clearInterval(interval);">Clear</button>
+	    </div>
+
+		<script>
+		var radius = 200;
+		var point_size = 4;
+		var center_x = 300;
+		var center_y = 250;
+
+		var c = document.getElementById("myCanvas");
+		var ctx = c.getContext("2d");
+		
+		var interval;
+
+		function drawCircle(color) 
+		{
+			ctx.beginPath();
+			ctx.strokeStyle=color;
+			ctx.arc(center_x, center_y, radius, 0, 2 * Math.PI);
+			ctx.stroke();
+		}
+
+		// draw num number of equidistant points
+		function drawPoints(num) 
+		{
+			for (var i = 0; i < num; i++) {
+				// calculate cordinates
+				var x_coord = center_x + radius * Math.cos(2 * Math.PI * i / num) * -1;
+				var y_coord = center_y + radius * Math.sin(2 * Math.PI * i / num) * -1;
+
+				// draw point
+				ctx.beginPath();
+   				ctx.arc(x_coord, y_coord, point_size, 0, 2 * Math.PI);
+    			ctx.fill();
+			}
+		}
+		
+		function connect(time, num)
+		{
+			var text = document.getElementById("text"); 
+
+			for (var i = 0; i < num; i++) {
+				var mod = (i * time) % num;
+				var x_one = center_x + radius * Math.cos(2 * Math.PI * i / num) * -1;
+			    var y_one = center_y + radius * Math.sin(2 * Math.PI * i / num) * -1;
+			    var x_two = center_x + radius * Math.cos(2 * Math.PI * mod / num) * -1;
+				var y_two = center_y + radius * Math.sin(2 * Math.PI * mod / num) * -1;
+
+				ctx.moveTo(x_one, y_one);
+				ctx.lineTo(x_two, y_two);
+				ctx.stroke();
+
+				text.innerHTML = "Factor: " + Math.round( time * 10 ) / 10; // display factor to one decimal point
+			}
+		}
+
+        var color = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+		function change_points()
+		{
+			var times = 2;
+			var num_points = 4;
+
+			// next four are not important, just magic numbers for changing color
+			mone = 16;
+			mtwo = 15;
+			mthree = 5;
+			flag = false; 
+
+			clearInterval(interval);
+			interval = window.setInterval(function() {
+	            	ctx.clearRect(0, 0, c.width, c.height); 
+	        		drawCircle("#9F6164");
+
+	        		// Draw circle changes color so must come after
+	        		ctx.strokeStyle = '#F' + color[mone] + 'A' + color[mtwo] + color[mthree] + 'D';
+					ctx.fillStyle = '#FF7182';
+
+	        		drawPoints(num_points);
+	        		connect(times, num_points);
+	        		points = [];
+	        		num_points++;
+
+	        		// go to next times
+	        		if (num_points > 60) {
+	        			times++;
+	        			num_points = 4;
+	        		}
+
+	        		mone = (mone + 1) % 16;
+	        		mtwo = (mtwo + 1) % 16;
+	        		if (flag) {
+	        			flag = false;
+	        		    mthree = (mthree + 1) % 16;
+	        		} else {
+	        			flag = true;
+	        		}
+
+	        		if (times > 20)
+	        			clearInterval(interval);
+
+			}, 50);
+		}
+
+		function change_factor(step, times, sleep)
+		{		
+			var mone = 13;
+			var mtwo = 10;
+			var mthree = color[8];
+			var n = 40
+
+			clearInterval(interval); // in case another button was pressed
+
+			interval = window.setInterval(function(){
+	            	ctx.clearRect(0, 0, c.width, c.height); 
+	        		drawCircle();
+
+	        		ctx.strokeStyle = '#' + color[mone] + 'D3' + color[mtwo] + '8' + color[mthree];
+					ctx.fillStyle = '#' + color[mone] + 'D3' + color[mtwo] + '8' + color[mthree];
+
+	        		drawPoints(n);
+	        		connect(times, n);
+	        		points = [];
+	        		times += step
+	        		mone = (mone + 1) % 16;
+	        		mtwo = (mtwo + 1) % 16;
+	        		mthree = (mtwo + 1) % 16;
+	        		if (times > 1000)
+	        		    clearInterval(interval);
+				}, sleep); 
+		}
+
+		function pause(fnc) {
+			if ($("#pause").hasClass("on")) {
+				$("#pause").removeClass("on");
+				$("#pause").text("Resume");
+				clearInterval(interval);
+			} else {
+				$("#pause").addClass("on");
+				$("#pause").text("Pause");	
+			}
+		}
+
+		drawCircle("#555555");
+		</script>
+	</body>
+</html>
